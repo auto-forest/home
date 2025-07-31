@@ -1,52 +1,54 @@
-import { db } from './firebase-config.js';
-import { doc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+import { db } from "./firebase-config.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-lite.js";
 
-const params = new URLSearchParams(window.location.search);
-const noticeId = params.get('id');
+// 문서 ID 가져오기
+const urlParams = new URLSearchParams(window.location.search);
+const id = urlParams.get("id");
 
-const detailContainer = document.getElementById('notice-detail');
-
-if (!noticeId) {
-  detailContainer.innerHTML = '<p class="text-red-500">잘못된 접근입니다.</p>';
+// 잘못된 접근 처리
+if (!id) {
+  document.getElementById("notice-detail").innerHTML = "<p class='text-center text-red-500'>잘못된 접근입니다.</p>";
 } else {
-  displayDetail(noticeId);
+  const docRef = doc(db, "notices", id);
+  getDoc(docRef).then((docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const title = data.title || "제목 없음";
+      const content = data.content || "";
+      const imageUrl = data.imageUrl || "";
+
+      // 관리자 모드인지 확인
+      const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+      // HTML 생성
+      document.getElementById("notice-detail").innerHTML = `
+        <div class="bg-white shadow p-6 rounded-lg max-w-2xl mx-auto">
+          <h2 class="text-2xl font-bold mb-4">${title}</h2>
+          ${imageUrl ? `<img src="${imageUrl}" alt="공지 이미지" class="w-full mb-4 rounded" />` : ""}
+          <p class="mb-4 whitespace-pre-line">${content}</p>
+          ${
+            isAdmin
+              ? `<div class="flex justify-end space-x-2">
+                  <a href="notice-edit.html?id=${id}" class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500">수정</a>
+                  <button id="delete-btn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">삭제</button>
+                </div>`
+              : ""
+          }
+        </div>
+      `;
+
+      // 삭제 버튼 이벤트
+      if (isAdmin) {
+        document.getElementById("delete-btn").addEventListener("click", async () => {
+          if (confirm("정말 삭제하시겠습니까?")) {
+            await deleteDoc(docRef);
+            alert("삭제되었습니다.");
+            window.location.href = "index.html";
+          }
+        });
+      }
+    } else {
+      document.getElementById("notice-detail").innerHTML = "<p class='text-center text-gray-500'>문서를 찾을 수 없습니다.</p>";
+    }
+  });
 }
-
-async function displayDetail(id) {
-  const docRef = doc(db, 'notices', id);
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) {
-    detailContainer.innerHTML = '<p class="text-red-500">존재하지 않는 공지입니다.</p>';
-    return;
-  }
-
-  const data = docSnap.data();
-  detailContainer.innerHTML = `
-    <img src="${data.imageUrl}" class="w-full max-w-3xl mx-auto mb-4 object-contain">
-    <h1 class="text-2xl font-bold mb-2">${data.title}</h1>
-    <p class="mb-4">${data.content}</p>
-    <div id="admin-buttons" class="hidden space-x-2">
-      <button class="bg-yellow-500 px-4 py-2 text-white rounded" onclick="editNotice()">수정</button>
-      <button class="bg-red-600 px-4 py-2 text-white rounded" onclick="deleteNotice()">삭제</button>
-    </div>
-  `;
-
-  // 관리자 인증 체크
-  const isAdmin = localStorage.getItem('admin') === 'true';
-  if (isAdmin) {
-    document.getElementById('admin-buttons').classList.remove('hidden');
-  }
-}
-
-window.editNotice = () => {
-  window.location.href = `notice-edit.html?id=${noticeId}`;
-};
-
-window.deleteNotice = async () => {
-  if (confirm('정말 삭제하시겠습니까?')) {
-    await deleteDoc(doc(db, 'notices', noticeId));
-    alert('삭제되었습니다.');
-    window.location.href = 'index.html';
-  }
-};
