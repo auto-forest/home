@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>공지사항 수정</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-6">
+  <div class="max-w-xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">공지사항 수정</h1>
+
+    <input type="text" id="title" class="w-full p-2 border rounded mb-4" placeholder="제목" />
+    <input type="file" id="image" accept="image/*" class="mb-4" />
+    <input type="password" id="adminPassword" class="w-full p-2 border rounded mb-4" placeholder="관리자 비밀번호" />
+
+    <button id="save-btn" class="bg-blue-600 text-white px-4 py-2 rounded">수정 완료</button>
+  </div>
+
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./notice-edit.js"></script>
+</body>
+</html>
